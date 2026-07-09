@@ -1,18 +1,14 @@
-import { SignJWT, jwtVerify } from 'jose';
+import jwt from 'jsonwebtoken';
 
-const SECRET = new TextEncoder().encode('ucs-car-recommend-secret-key-2024');
+const SECRET = 'ucs-car-recommend-secret-key-2024';
 
-export async function signToken(payload: object) {
-  return new SignJWT(payload as any)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('7d')
-    .sign(SECRET);
+export function signToken(payload: object) {
+  return jwt.sign(payload, SECRET, { expiresIn: '7d' });
 }
 
-export async function verifyToken(token: string) {
+export function verifyToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, SECRET, { clockTolerance: 60 });
-    return payload;
+    return jwt.verify(token, SECRET) as any;
   } catch {
     return null;
   }

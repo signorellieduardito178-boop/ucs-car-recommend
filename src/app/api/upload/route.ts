@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const token = req.cookies.get('admin-token')?.value;
-    const payload = token ? await verifyToken(token) : null;
+    const payload = token ? verifyToken(token) : null;
     if (!payload || payload.role !== 'admin') {
       return NextResponse.json({ error: '未授权' }, { status: 401 });
     }

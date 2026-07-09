@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const { username, password } = body;
 
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-      const token = await signToken({ username, role: 'admin' });
+      const token = signToken({ username, role: 'admin' });
       const response = NextResponse.json({ success: true });
       response.cookies.set('admin-token', token, {
         httpOnly: true,
