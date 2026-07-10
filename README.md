@@ -1,173 +1,103 @@
-# UCS展车外借推荐系统 — 共享协作版
+# UCS展车外借推荐系统 — 轻量版
 
-## 项目简介
+> 纯静态网站，无需后端服务器，数据通过 JSON 文件管理，部署到 Cloudflare Pages（国内访问快）。
 
-基于 Next.js 14 + MongoDB Atlas + Vercel 构建的展车共享申请平台。
+## 系统架构
 
-| 角色 | 权限 |
-|------|------|
-| **销售** | 检索展车、提交借用申请（填写姓名+所在门店即可） |
-| **管理员** | 上传/更新展车数据、审批销售申请、重置车辆状态 |
+```
+销售打开网站 → 填写信息 → 获取推荐 → 选中车辆 → 复制信息/跳转飞书多维表申请
+                                    ↑
+                                   数据来自 JSON 文件
+                                    ↑
+管理员每日更新：Excel → 本地脚本 → JSON → Git Push → 自动部署
+```
 
-## 系统截图预览
+## 使用方式
 
-- **销售端**：填写姓名+门店 → 输入需求 → 查看推荐 → 点击「申请借用」
-- **管理后台**：登录 → 查看待审批列表 → 点击同意/否决 → 上传新数据
+### 销售（Fellow）
 
-## 第一步：环境准备（免费）
+1. 打开网站（管理员会提供链接）
+2. 填写**姓名**和**所在门店**
+3. 输入需求，例如：`城北万象城要一辆es8，白色`
+4. 点击「获取推荐」
+5. 在结果中选中合适的车辆，点击「📋 复制信息」或「去飞书申请」
+6. 在飞书多维表中粘贴信息并提交申请
+7. 等待管理员审批（飞书会自动推送消息）
 
-### 1.1 注册 MongoDB Atlas（免费数据库）
+### 管理员（你）
 
-1. 打开 https://www.mongodb.com/atlas
-2. 点击「Try Free」，用邮箱注册
-3. 创建集群：
-   - 选择「Shared」免费层（M0）
-   - 选择 AWS + 新加坡/东京区域（离你最近）
-   - 集群名保持默认即可
-4. 创建数据库用户：
-   - 左侧菜单 → Database Access → Add New Database User
-   - 用户名：`ucs_admin`
-   - 密码：自己设一个（记住它！）
-   - 权限：Read and write to any database
-5. 设置网络访问：
-   - 左侧菜单 → Network Access → Add IP Address
-   - 点击「Allow Access from Anywhere」（Vercel 是动态 IP）
-6. 获取连接字符串：
-   - 回到 Clusters 页面，点击「Connect」→「Drivers」
-   - 选择 Node.js，复制连接字符串
-   - 格式如：`mongodb+srv://ucs_admin:密码@cluster0.xxxxx.mongodb.net/ucs_car?retryWrites=true&w=majority`
+#### 日常更新数据（每天 1 次）
 
-### 1.2 确认 GitHub 账号
+1. 从系统导出展车列表 Excel 和门店信息 Excel
+2. 将 Excel 放到项目 `data/` 目录：
+   - `data/展车列表.xlsx`
+   - `data/门店信息.xlsx`
+3. 双击运行 `scripts/convert-excel.bat`
+4. 按提示选择是否推送到 GitHub
+5. 1-2 分钟后网站自动更新
 
-确保你有 GitHub 账号（你的用户名：`signorellieduardito178-boop`）
-
----
-
-## 第二步：本地运行（可选，用于测试）
-
-### 2.1 安装 Node.js
-
-下载并安装 LTS 版本：https://nodejs.org/
-
-### 2.2 安装依赖
+#### 手动更新（命令行）
 
 ```bash
-# 进入项目目录
 cd ucs-car-recommend
 
-# 安装依赖
-npm install
-```
+# 将 Excel 放到 data/ 目录后
+npm install                    # 首次运行
+npm run convert               # 转换为 JSON
 
-### 2.3 配置环境变量
-
-在项目根目录创建 `.env.local` 文件：
-
-```env
-MONGODB_URI=mongodb+srv://ucs_admin:你的密码@cluster0.xxxxx.mongodb.net/ucs_car?retryWrites=true&w=majority
-
-# 飞书机器人（可选，不配置则不发通知）
-FEISHU_WEBHOOK_URL=
-```
-
-### 2.4 启动开发服务器
-
-```bash
-npm run dev
-```
-
-浏览器打开 http://localhost:3000 即可使用。
-
----
-
-## 第三步：部署到 Vercel（正式环境）
-
-### 3.1 注册 Vercel
-
-1. 打开 https://vercel.com
-2. 用 GitHub 账号登录（Sign up with GitHub）
-3. 授权 Vercel 访问你的 GitHub 仓库
-
-### 3.2 创建 GitHub 仓库并上传代码
-
-```bash
-# 在项目根目录初始化 git
-git init
 git add .
-git commit -m "Initial commit"
-
-# 在 GitHub 上创建新仓库（名字如 ucs-car-recommend）
-# 然后关联并推送
-git remote add origin https://github.com/signorellieduardito178-boop/ucs-car-recommend.git
-git branch -M main
-git push -u origin main
+git commit -m "更新展车数据"
+git push                      # Cloudflare Pages 自动部署
 ```
 
-### 3.3 在 Vercel 上部署
+## 技术栈
 
-1. 打开 https://vercel.com/dashboard
-2. 点击「Add New Project」
-3. 找到 `ucs-car-recommend` 仓库，点击「Import」
-4. 配置环境变量：
-   - 找到「Environment Variables」区域
-   - 添加 `MONGODB_URI`，值为你的 MongoDB 连接字符串
-   - 如有飞书 webhook，也添加 `FEISHU_WEBHOOK_URL`
-5. 点击「Deploy」
-6. 等待 1-2 分钟，部署完成后会获得一个网址，如：
-   ```
-   https://ucs-car-recommend-xxxx.vercel.app
-   ```
+- **前端框架**: Next.js 14 (静态导出)
+- **样式**: Tailwind CSS
+- **数据格式**: JSON（静态文件）
+- **托管平台**: Cloudflare Pages（国内访问快）
+- **审批流程**: 飞书多维表（自带消息推送）
 
-### 3.4 绑定自定义域名（可选）
+## 部署到 Cloudflare Pages
 
-1. Vercel 项目 → Settings → Domains
-2. 输入你的域名（如 `car.yourcompany.com`）
-3. 按提示在域名服务商处添加 CNAME 记录
+### 1. 注册 Cloudflare
 
----
+1. 打开 https://dash.cloudflare.com/sign-up
+2. 用邮箱注册（无需信用卡）
 
-## 第四步：飞书机器人配置（可选）
+### 2. 创建 Pages 项目
 
-如果想让新申请自动推送到飞书群：
+1. 登录后点击左侧 **「Pages」**
+2. 点击 **「Create a project」**
+3. 选择 **「Connect to Git」**
+4. 授权 Cloudflare 访问你的 GitHub 账号
+5. 选择 `ucs-car-recommend` 仓库
+6. 配置：
+   - **Framework preset**: `Next.js`
+   - **Build command**: `npm install && npm run build`
+   - **Build output directory**: `out`
+7. 点击 **「Save and Deploy」**
 
-1. 在飞书群聊中点击「设置」→「群机器人」→「添加机器人」→「自定义机器人」
-2. 给机器人起个名字（如「展车申请助手」）
-3. 复制 Webhook 地址
-4. 将地址填入 Vercel 环境变量的 `FEISHU_WEBHOOK_URL`
-5. 重新部署项目
+### 3. 等待部署完成
 
----
+约 1-2 分钟后，Cloudflare 会给你一个网址，例如：
+```
+https://ucs-car-recommend.pages.dev
+```
 
-## 使用说明
+### 4. 绑定自定义域名（可选）
 
-### 销售如何使用
+1. 在 Cloudflare Pages 项目 → **Custom domains**
+2. 点击 **「Set up a custom domain」**
+3. 输入你的域名，按提示配置 DNS
 
-1. 打开网站首页
-2. 填写姓名和所在门店
-3. 输入需求（如「城北万象城要一辆es8，白色」）
-4. 可选填写车漆/内饰偏好（支持模糊匹配）
-5. 点击「获取推荐」
-6. 在结果中点击「申请借用」
-7. 等待管理员审批
-
-### 管理员如何使用
-
-1. 打开 `/admin` 页面（或点击底部「管理员入口」）
-2. 用账号 `3240102091` 和密码 `qiao6789786123` 登录
-3. **数据管理**：上传展车列表和门店信息 Excel（会全量替换）
-4. **待审批**：查看销售提交的申请，点击「同意」或「否决」
-5. **审批历史**：查看所有已处理的申请
-6. **重置状态**：点击「重置所有车辆状态」恢复全部可借车辆
-
----
-
-## 数据文件格式要求
+## 数据文件格式
 
 ### 展车列表 Excel
 
 | 列名 | 说明 | 示例 |
 |------|------|------|
-| VIN码 | 车架号（唯一标识） | LSxxxxxxxxxxxx |
+| VIN码 | 车架号 | LSxxxxxxxxxxxx |
 | 车型 | 车型名称 | ES8 |
 | 车漆 | 车漆颜色 | 云白 |
 | 内饰主题 | 内饰颜色 | 阿尔卑斯灰 |
@@ -184,29 +114,26 @@ git push -u origin main
 | 门店 | 门店全称 | 杭州|城北万象城 |
 | 归属行政片区 | 所在行政区 | 上城区 |
 
----
+## 飞书多维表配置
 
-## 常见问题
+1. 在飞书创建多维表（Base）
+2. 添加字段：销售姓名、所在门店、目标门店、车型、车架号、车漆、内饰、申请状态、审批备注
+3. 创建「表单视图」用于销售填写
+4. 在表单设置中开启审批功能
+5. 将表单链接配置到 `src/app/page.tsx` 中的 `generateFeishuLink` 函数
 
-### Q1: 部署后访问很慢？
-A: Vercel 免费版的 CDN 主要在美国，国内访问可能稍慢。如需更快，建议升级到腾讯云轻量服务器（约50元/月）。
+## 本地开发
 
-### Q2: MongoDB 免费额度够用吗？
-A: Atlas M0 免费层提供 512MB 存储。展车数据通常只有几百条，完全够用。
+```bash
+npm install
+npm run dev
+```
 
-### Q3: 如何修改管理员密码？
-A: 修改 `src/app/api/auth/route.ts` 中的 `ADMIN_PASS` 变量，重新部署即可。
+浏览器打开 http://localhost:3000
 
-### Q4: 销售申请后多久能收到通知？
-A: 如果配置了飞书机器人，申请提交后 1-2 秒内会推送。如果没有配置，管理后台每 10 秒自动刷新待审批列表。
+## 注意事项
 
----
-
-## 技术栈
-
-- **框架**: Next.js 14 (App Router)
-- **数据库**: MongoDB Atlas (Mongoose ORM)
-- **认证**: JWT (jose)
-- **样式**: Tailwind CSS
-- **部署**: Vercel
-- **Excel解析**: xlsx
+1. **数据更新延迟**：Git push 后需要 1-2 分钟重新部署，不是秒级实时
+2. **已选用车辆**：需要你手动维护 Excel 中标记，次日更新到网站
+3. **并发申请**：两个销售可能同时申请同一辆车（飞书多维表端需配置校验规则）
+4. **图片优化**：静态导出模式下图片未优化，如有图片需求请使用外部图床

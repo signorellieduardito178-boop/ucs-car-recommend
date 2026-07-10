@@ -1,0 +1,17 @@
+[
+  {
+    "vin": "示例车架号1",
+    "model": "ES8",
+    "paint": "云白",
+    "interior": "阿尔卑斯灰",
+    "location": "杭州CDC",
+    "actualPoint": "交付中心",
+    "salesStatus": "可售",
+    "damageRecord": "无质损",
+    "isDowngrade": "",
+    "pointType": "CDC",
+    "pointPriority": 1,
+    "isDeleted": false,
+    "isLocked": false
+  }
+]

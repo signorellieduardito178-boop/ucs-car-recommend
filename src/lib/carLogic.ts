@@ -155,7 +155,7 @@ export function runRecommendation(
   paintPref: string,
   interiorPref: string
 ) {
-  const allModels = [...new Set(cars.map(r => r.model).filter(Boolean))].sort((a: string, b: string) => b.length - a.length);
+  const allModels = Array.from(new Set(cars.map(r => r.model).filter(Boolean))).sort((a: string, b: string) => b.length - a.length);
   const { targetModel, targetStore } = parseDemand(demandText, allModels, stores);
 
   if (!targetModel) {
