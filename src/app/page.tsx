@@ -40,6 +40,7 @@ export default function HomePage() {
       if ('error' in res) {
         setError(res.error || '未知错误');
       } else {
+        
         setResult(res);
       }
     } catch (e) {
