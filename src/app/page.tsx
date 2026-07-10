@@ -38,7 +38,7 @@ export default function HomePage() {
       const { runRecommendation } = await import('@/lib/carLogic');
       const res = runRecommendation(carsData, storesData, demand, paintPref, interiorPref);
       if ('error' in res) {
-        setError(res.error);
+        setError(res.error || '未知错误');
       } else {
         setResult(res);
       }
